@@ -1,0 +1,107 @@
+Perlin
+{
+Tag {"Perlin"}
+Script {"Perlin", "Scripts/Perlin.as"}
+Text{"", "Assets/Fonts/sansation.ttf", 300.0, 250.0, 50, 200, 15, 15, 255}
+}
+
+Master
+{
+Tag {"Master"}
+Script {"Master", "Scripts/Master.as"}
+}
+
+MapLogic
+{
+Tag {"MapLogic"}
+Script {"MapLogic", "Scripts/MapLogic.as"}
+Text{"", "Assets/Fonts/sansation.ttf", 10.0, 550.0, 20, 255, 255, 255, 255}
+}
+
+Wizard
+{
+Tag {"Wizard"}
+Render { 32.0, 320.0, 32.0, 32.0, "Assets/Textures/U5A.png" }
+Physics { 2, 2, 28, 28, 0, 0, 100, 0.01, true, false, false }
+Script { "Wizard", "Scripts/Wizard.as" }
+Animation { "idle", 1, false, 1, 32, 320, 32, 32 }
+Animation { "walking", 12, true, 4,
+32, 320, 32, 32,
+64, 320, 32, 32,
+32, 320, 32, 32,
+96, 320, 32, 32 }
+}
+
+MapWizard
+{
+Tag {"MapWizard"}
+Render { 32.0, 320.0, 32.0, 32.0, "Assets/Textures/U5A.png" }
+Physics { 2, 2, 28, 28, 0, 0, 100, 0.01, true, false, false }
+Script { "MapWizard", "Scripts/MapWizard.as" }
+Animation { "idle", 1, false, 1, 32, 320, 32, 32 }
+Animation { "walking", 12, true, 4,
+32, 320, 32, 32,
+64, 320, 32, 32,
+32, 320, 32, 32,
+96, 320, 32, 32 }
+}
+
+Fireball
+{
+Tag{"Fireball", "pProj"}
+Render{0.0, 0.0, 16.0, 16.0, "Assets/Textures/U5A.png"}
+Physics{2.0, 2.0, 12.0, 12.0, 0.0, 0.0, 1.0, 0.0, false, false, false}
+Script {"Fireball", "Scripts/Fireball.as"}
+Animation{"default", 5, true, 4,
+0.0, 0.0, 16.0, 16.0,
+0.0, 16.0, 16.0, 16.0
+16.0, 0.0, 16.0, 16.0
+16.0, 16.0, 16.0, 16.0}
+Particles { 8.0, 8.0, 0, 360, 1, 2, 30, 45, 2.5, 5.0, 1, 10, 20, true, 255, 50, 0, 255 }
+}
+
+Exit
+{
+Tag {"Exit"}
+Physics {0.0, 0.0, 32.0, 32.0, 0.0, 0.0, 0.0, 0.0, false, false, false}
+Script {"Exit", "Scripts/Exit.as"}
+}
+
+Scroll
+{
+Tag {"Scroll"}
+Render { 128.0, 256.0, 32.0, 32.0, "Assets/Textures/U5A.png" }
+Physics { 2, 2, 28, 28, 0, 0, 100, 0.01, false, false, false }
+Particles { 16.0, 16.0, 0, 360, 1, 3, 30, 45, 0.5, 1.0, 1, 1, 50, true, 100, 100, 255, 170 }
+Script { "Scroll", "Scripts/Scroll.as" }
+}
+
+Clouds
+{
+Tag{"Clouds"}
+Render{0.0, 0.0, 800.0, 600.0, "Assets/Textures/Clouds.png"}
+Script{"Clouds", "Scripts/Clouds.as"}
+}
+
+SpellFrame
+{
+Tag {"SpellFrame"}
+Render { 0.0, 32.0, 32.0, 32.0, "Assets/Textures/U5A.png" }
+}
+
+SpellIcon
+{
+Tag { "SpellIcon" }
+Render { 0.0, 0.0, 16.0, 16.0, "Assets/Textures/U5A.png" }
+Script {"SpellIcon", "Scripts/SpellIcon.as" }
+}
+
+DeadTree
+{
+Tag {"DeadTree"}
+Render { 352.0, 32.0, 32.0, 32.0, "Assets/Textures/U5.png" }
+Physics { 0.0, 0.0, 32.0, 32.0, 0, 0, 0, 0.0, true, false, false }
+Script { "DeadTree", "Scripts/DeadTree.as" }
+Particles { 8.0, 8.0, 50, 80, 2, 3, 30, 45, 1.5, 2.0, 1, 1, 20, true, 255, 50, 0, 255 }
+}
+
