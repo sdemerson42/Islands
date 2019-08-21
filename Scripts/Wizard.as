@@ -7,6 +7,7 @@ void Wizard_main(ScriptComponent @p)
 		p.setPosition(gMaster.getReg("destx"), gMaster.getReg("desty"));
 	}
 	p.setMainFunction("mainState");
+	p.log("Wizard OK");
 }
 
 void Wizard_setSpell(ScriptComponent @p, string spellName)

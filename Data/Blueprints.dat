@@ -2,6 +2,11 @@ Perlin
 {
 Tag {"Perlin"}
 Script {"Perlin", "Scripts/Perlin.as"}
+}
+
+WorldBuilder
+{
+Script { "WorldBuilder", "Scripts/WorldBuilder.as" }
 Text{"", "Assets/Fonts/sansation.ttf", 300.0, 250.0, 50, 200, 15, 15, 255}
 }
 

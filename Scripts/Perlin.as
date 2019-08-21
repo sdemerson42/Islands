@@ -15,99 +15,6 @@ class Ivec
 void Perlin_main(ScriptComponent @p)
 {
 	p.log("Perlin OK");
-	p.setTextString("Building island...");
-	p.suspend();
-
-	int w = 300;
-	int h = 300;
-
-	auto pmap = Perlin_makeNoise(p, w, h, 25, 25);
-	Perlin_simpleMask(pmap, 130, 0.0);
-	
-	// Build Scene
-
-	// Translate tiles
-
-	array<int> tiles;
-
-	// Land, sea, lakes
-
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			// From .2, .3 water level...
-			auto val = pmap[i][j];
-			if (val < 0.2) tiles.insertLast(1);
-			else if (val < 0.3) tiles.insertLast(3);
-			else if (val < 0.6) tiles.insertLast(5);
-			else if (val < 0.8) tiles.insertLast(6);
-			else tiles.insertLast(8);
-		}
-	}
-
-	// Forests
-
-	auto tmap = Perlin_makeNoise(p, w, h, 25, 25);
-	int ti = 0;
-
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			if (tiles[ti] != 1 and tmap[i][j] > 0.5)
-			{
-				if (tmap[i][j] < 0.6) tiles[ti] = 8;
-				else if (tmap[i][j] < 0.8) tiles[ti] = 9;
-				else tiles[ti] = 10;
-			}
-			++ti;
-		}
-	}
-
-	// Mountains
-
-	tmap = Perlin_makeNoise(p, w, h, 25, 25);
-	ti = 0;
-
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			if (tiles[ti] != 1 and tmap[i][j] > 0.6)
-			{
-				if (tmap[i][j] < 0.8) tiles[ti] =11;
-				else if (tmap[i][j] < 0.85) tiles[ti] = 12;
-				else tiles[ti] = 13;
-			}
-			++ti;
-		}
-	}
-
-	// Start
-
-	int wts = 0;
-	while(tiles[wts] == 1 or tiles[wts] == 10 or tiles[wts] == 13)
-	{
-		wts = p.randomRange(0, tiles.length());
-	}
-
-	float wx = wts % w * 32.0f;
-	float wy = wts / w * 32.0f;
-		
-	p.createSceneData("Perlin", w * 32, h * 32, 100, 100);
-	p.addSceneLayer("Perlin", "terrain", false);
-	p.addSceneLayer("Perlin", "main", false);
-	p.addSceneLayer("Perlin", "HUD", true);
-	p.addSceneTilemap("Perlin", "U5", "terrain", w, h, tiles);
-	p.addSceneEntity("Perlin", "Master", 1, true, "main", 0.0, 0.0, true);
-	p.addSceneEntity("Perlin", "Wizard", 1, true, "main", wx, wy, false);
-	//p.addSceneEntity("Perlin", "MapLogic", 1, true, "HUD", 0.0, 0.0, false);
-	p.addSceneEntity("Perlin", "Scroll", 1, true, "main", wx - 32.0, wy - 32.0, false);
-	p.addSceneEntity("Perlin", "SpellFrame", 1, true, "HUD", 30.0, 550.0, false);
-	p.addSceneEntity("Perlin", "SpellIcon", 1, true, "HUD", 38.0, 558.0, false);
-	
-	p.changeScene("Perlin");
 }
 
 float Perlin_smooth(float x)
@@ -117,8 +24,9 @@ float Perlin_smooth(float x)
 
 float Perlin_lerp(float x0, float x1, float t)
 {
-	return x1 * t + x0 * (1 - t);
+	return x1 * t + x0 * (1.0 - t);
 }
+
 
 
 array<array<float>> Perlin_makeNoise(ScriptComponent @p, int w, int h, int cw, int ch)
@@ -207,12 +115,14 @@ array<array<float>> Perlin_makeNoise(ScriptComponent @p, int w, int h, int cw, i
 
 }
 
-void Perlin_simpleMask(array<array<float>> @map, int r, float fillValue)
+void Perlin_circularMask(array<array<float>> @map, int r)
 {
 	int w = map.length();
 	int h = map[0].length();
 	int cx = w / 2;
 	int cy = h / 2;
+	float maxDist = sqrt(cx * cx + cy * cy);
+	
 
 	for (int i = 0; i < w; ++i)
 	{
@@ -222,9 +132,48 @@ void Perlin_simpleMask(array<array<float>> @map, int r, float fillValue)
 			int dy = j - cy;
 			auto dist = sqrt(dx * dx + dy * dy);
 			if (dist > r)
-			{ 
-				map[i][j] = fillValue;
+			{
+				float t = (dist - maxDist) / (float(r) - maxDist);
+				map[i][j] = map[i][j] * t;
 			}	
 		}
 	}
+}
+
+void Perlin_rectangularMask(array<array<float>> @map, int rw)
+{
+	int w = map.length();
+	int h = map[0].length();
+	
+	for (int k = 0; k < rw; ++k)
+	{
+		float t = float(k) / float(rw - 1);
+		
+		// R, D, L, U
+		for (int i = k; i < w - (1 + k); ++i)
+		{
+			int j = k;
+			map[i][j] *= t;
+		}
+		
+		for (int j = k; j < h - (1 + k); ++j)
+		{
+			int i = w - (1 + k);
+			map[i][j] *= t;
+		}
+		
+		for (int i = w - (1 + k); i >= k; --i)
+		{
+			int j = h - (1 + k);
+			map[i][j] *= t;
+		}
+		
+		for (int j = h - (1 + k); j >= k; --j)
+		{
+			int i = k;
+			map[i][j] *= t;
+		}
+		
+	}
+
 }

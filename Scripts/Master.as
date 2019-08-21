@@ -6,6 +6,8 @@ void Master_main(ScriptComponent @p)
 
 	p.setReg("wizardSpell", -1);
 	
+	p.log("Master OK");
+	
 	p.setSleep(true);
 }
 
