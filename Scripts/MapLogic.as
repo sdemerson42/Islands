@@ -5,9 +5,9 @@ void MapLogic_main(ScriptComponent @p)
 	{
 		if (gMapWizard !is null)
 		{
-			auto pos = gMapWizard.position();
-			p.setTextString("(" + pos.x + ", " + pos.y + ")");
+			int food = gMapWizard.getReg("food");
+			p.setTextString("Food: " + food);
 		}
-		p.suspend(60);
+		p.suspend();
 	}	
 }
