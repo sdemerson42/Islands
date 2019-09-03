@@ -4,7 +4,7 @@ Physics { 960, 960, 100, 100 }
 Layer { "main", "free" }
 
 PersistentEntity { "Master", 1, true, "main", 0.0, 0.0 }
-Entity { "WorldBuilder", 1, true, "main", 0.0, 0.0 }
+PersistentEntity { "WorldBuilder", 1, true, "main", 0.0, 0.0 }
 }
 
 

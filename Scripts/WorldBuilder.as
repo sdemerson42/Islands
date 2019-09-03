@@ -474,10 +474,9 @@ class Room
 class Dungeon
 {
 	string name;
-	array<int> tiles;
-	array<Room> rooms;
+	array<int> tile;
+	array<Room> room;
 	int startRoom;
-	Filler startPosition;
 }
 
 array<Dungeon> gDungeon;
@@ -486,27 +485,39 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 {
 	// TEST
 	//79 68
-	array<array<int>> tmap(100, array<int>(100, 79));
+	Dungeon dun;
+	dun.name = "D1";
+	dun.startRoom = 1;
+	
+	Room r1;
+	r1.id = 0;
+	array<array<int>> tmap(100, array<int>(100, 255));
 	for (int i = 0; i < 20; ++i)
 	{
 		for (int j = 0; j < 20; ++j)
 		{
 			tmap[i][j] = 68;
 			if (i == 0 or j == 0 or i == 19 or j == 19) tmap[i][j] = 79;
+			r1.tpos.insertLast(j * 100 + i);
 		}
 	}
+	dun.room.insertLast(r1);
 	
+	Room r2;
+	r2.id = 1;
 	for (int i = 0; i < 50; ++i)
 	{
 		for (int j = 19; j < 70; ++j)
 		{
 			tmap[i][j] = 68;
 			if (i == 0 or j == 19 or i == 49 or j == 69) tmap[i][j] = 79;
+			r2.tpos.insertLast(j * 100 + i);
 		}
 	}
+	dun.room.insertLast(r2);
 	
 	tmap[10][19] = 68;
-	tmap[11][19] = 68;
+	//tmap[11][19] = 68;
 	
 	array<int> tiles(100 * 100);
 	int ti = 0;
@@ -518,17 +529,34 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 			++ti;
 		}
 	}
+	dun.tile = tiles;
+	gDungeon.insertLast(dun);
 	
-	gMaster.setReg("destx", 32);
-	gMaster.setReg("desty", 32);
+	array<string> dunData;
+	dunData.insertLast("dunid");
+	dunData.insertLast("0");
+	
+	array<string> doorData;
+	doorData.insertLast("dunid");
+	doorData.insertLast("0");
+	doorData.insertLast("rm1");
+	doorData.insertLast("0");
+	doorData.insertLast("rm2");
+	doorData.insertLast("1");
+	
+	gMaster.setReg("destx", 960);
+	gMaster.setReg("desty", 960);
 	p.createSceneData("D1", 3200, 3200, 100, 100);
 	p.addSceneLayer("D1", "terrain", false);
 	p.addSceneLayer("D1", "main", false);
 	p.addSceneLayer("D1", "HUD", true);
-	p.addSceneEntity("D1", "MapLogic", 1, true, "HUD", 0.0, 0.0, false);
+	p.addSceneDataEntity("D1", "DungeonLogic", 1, true, "HUD", 0.0, 0.0, false, dunData);
+	p.addSceneDataEntity("D1", "DunDoor", 1, true, "main", 320.0, 19 * 32, false, doorData);
 	p.addSceneBase("D1", "PlayBase");
 	p.addSceneTilemap("D1", "U5", "terrain", 100, 100, tiles);
 	//p.addSceneEntity("D1", "Scroll", 1, true, "main", wx - 32.0, wy - 32.0, false);
+	
+	p.setTextString("");
 	
 	p.changeScene("D1");
 	

@@ -110,3 +110,16 @@ Script { "DeadTree", "Scripts/DeadTree.as" }
 Particles { 8.0, 8.0, 50, 80, 2, 3, 30, 45, 1.5, 2.0, 1, 1, 20, true, 255, 50, 0, 255 }
 }
 
+DungeonLogic
+{
+Script { "DungeonLogic", "Scripts/DungeonLogic.as" }
+}
+
+DunDoor
+{
+Tag {"DunDoor"}
+Render { 768.0, 160.0, 32.0, 32.0, "Assets/Textures/U5.png" }
+Physics { 0.0, 0.0, 32.0, 32.0, 0, 0, 0, 0.0, false, false, false }
+Script { "DunDoor", "Scripts/DunDoor.as" }
+}
+
