@@ -3,6 +3,11 @@ void WorldBuilder_main(ScriptComponent @p)
 	p.setTextString("Building island...");
 	p.suspend();
 	//WorldBuilder_bigContinent(p);
+	
+	array<string> files;
+	files.insertLast("Data/Castle.txt");
+	WorldBuilder_readAreaData(p, files);
+	
 	WorldBuilder_buildDungeon(p);
 }
 
@@ -479,57 +484,90 @@ class Dungeon
 	int startRoom;
 }
 
+class HookData
+{
+	string orient;
+	int tpos;
+}
+
+class RoomData
+{
+	string name;
+	Filler size;
+	array<int> tile;
+	array<HookData> hookData;
+}
+
+class AreaData
+{
+	string name;
+	string tileset;
+	array<RoomData> roomData;
+}
+
 array<Dungeon> gDungeon;
+array<AreaData> gAreaData;
+
+void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
+{
+	p.log("Reading area data...");
+	
+	for (int i = 0; i < fname.length(); ++i)
+	{
+		auto f = fname[i];
+		array<string> data = p.readDataFromFile(f);
+		
+		int fi = 0;
+		
+		AreaData ad;
+		ad.name = data[fi++];
+		ad.tileset = data[fi++];
+		
+		int roomCount = 0;
+		int roomTotal = parseInt(data[fi++]);
+		
+		while(roomCount < roomTotal)
+		{
+			RoomData rd;
+			rd.name = data[fi++];
+			rd.size.x = parseInt(data[fi++]);
+			rd.size.y = parseInt(data[fi++]);
+			for (int j = 0; j < rd.size.x * rd.size.y; ++j)
+			{
+				int val = parseInt(data[fi++]);
+				rd.tile.insertLast(val);
+			}
+			int hookTotal = parseInt(data[fi++]);
+			for (int j = 0; j < hookTotal; ++j)
+			{
+				string orient = data[fi++];
+				int tpos = parseInt(data[fi++]);
+				HookData hd;
+				hd.orient = orient;
+				hd.tpos = tpos;
+				rd.hookData.insertLast(hd);
+			}
+			ad.roomData.insertLast(rd);
+		
+			++roomCount;
+		}
+		
+		p.log("Area data " + ad.name + " loaded."); 
+		gAreaData.insertLast(ad);
+	}
+}
 
 void WorldBuilder_buildDungeon(ScriptComponent @p)
 {
+	
 	// TEST
 	//79 68
 	Dungeon dun;
 	dun.name = "D1";
-	dun.startRoom = 1;
+	dun.startRoom = 0;
 	
-	Room r1;
-	r1.id = 0;
-	array<array<int>> tmap(100, array<int>(100, 255));
-	for (int i = 0; i < 20; ++i)
-	{
-		for (int j = 0; j < 20; ++j)
-		{
-			tmap[i][j] = 68;
-			if (i == 0 or j == 0 or i == 19 or j == 19) tmap[i][j] = 79;
-			r1.tpos.insertLast(j * 100 + i);
-		}
-	}
-	dun.room.insertLast(r1);
 	
-	Room r2;
-	r2.id = 1;
-	for (int i = 0; i < 50; ++i)
-	{
-		for (int j = 19; j < 70; ++j)
-		{
-			tmap[i][j] = 68;
-			if (i == 0 or j == 19 or i == 49 or j == 69) tmap[i][j] = 79;
-			r2.tpos.insertLast(j * 100 + i);
-		}
-	}
-	dun.room.insertLast(r2);
 	
-	tmap[10][19] = 68;
-	//tmap[11][19] = 68;
-	
-	array<int> tiles(100 * 100);
-	int ti = 0;
-	for (int j = 0; j < tmap[0].length(); ++j)
-	{
-		for(int i = 0; i < tmap.length(); ++i)
-		{
-			tiles[ti] = tmap[i][j];
-			++ti;
-		}
-	}
-	dun.tile = tiles;
 	gDungeon.insertLast(dun);
 	
 	array<string> dunData;
@@ -551,9 +589,8 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	p.addSceneLayer("D1", "main", false);
 	p.addSceneLayer("D1", "HUD", true);
 	p.addSceneDataEntity("D1", "DungeonLogic", 1, true, "HUD", 0.0, 0.0, false, dunData);
-	p.addSceneDataEntity("D1", "DunDoor", 1, true, "main", 320.0, 19 * 32, false, doorData);
 	p.addSceneBase("D1", "PlayBase");
-	p.addSceneTilemap("D1", "U5", "terrain", 100, 100, tiles);
+	p.addSceneTilemap("D1", "U5", "terrain", 100, 100, tile);
 	//p.addSceneEntity("D1", "Scroll", 1, true, "main", wx - 32.0, wy - 32.0, false);
 	
 	p.setTextString("");
