@@ -2,6 +2,10 @@ void DungeonLogic_main(ScriptComponent @p)
 {
 	p.log("DungeonLogic OK");
 	
+	// Place doors
+	
+	
+	
 	// Apply fog of war
 	
 	auto @dun = gDungeon[p.getReg("dunid")];
@@ -16,11 +20,11 @@ void DungeonLogic_main(ScriptComponent @p)
 		}
 	}
 	
-	// Clear startRoom
+	// Clear visited rooms
 	for (int i = 0; i < dun.room.length(); ++i)
 	{
 		auto @rm = dun.room[i];
-		if (rm.id == dun.startRoom)
+		if (rm.visited or rm.id == sid)
 		{
 			for (int j = 0; j < rm.tpos.length(); ++j)
 			{

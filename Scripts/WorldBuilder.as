@@ -474,6 +474,7 @@ class Room
 {
 	int id;
 	array<int> tpos;
+	bool visited;
 }
 
 class Dungeon
@@ -487,7 +488,7 @@ class Dungeon
 class HookData
 {
 	string orient;
-	int tpos;
+	Filler pos;
 }
 
 class RoomData
@@ -541,10 +542,12 @@ void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 			for (int j = 0; j < hookTotal; ++j)
 			{
 				string orient = data[fi++];
-				int tpos = parseInt(data[fi++]);
+				Filler pos;
+				pos.x = parseInt(data[fi++]);
+				pos.y = parseInt(data[fi++]);
 				HookData hd;
 				hd.orient = orient;
-				hd.tpos = tpos;
+				hd.pos = pos;
 				rd.hookData.insertLast(hd);
 			}
 			ad.roomData.insertLast(rd);
@@ -561,12 +564,202 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 {
 	
 	// TEST
-	//79 68
+	
+	int w = 100;
+	int h = 100;
+	array<int> tile(w * h, 255);
+	array<HookData> hook;
+	int roomTotal = 5;
+	int rmid = 0;
+	
 	Dungeon dun;
 	dun.name = "D1";
 	dun.startRoom = 0;
 	
+	auto @ad = gAreaData[0];
 	
+	// Starting room
+	
+	Room rm;
+	rm.id = rmid++;
+	rm.visited = true;
+	auto @rd = ad.roomData[p.randomRange(0, ad.roomData.length())];
+	int rl = w / 2;
+	int rt = h / 2;
+	int rr = rl + rd.size.x;
+	int rb = rt + rd.size.y;
+	
+	
+	int index = 0;
+	for (int j = rt; j < rb; ++j)
+	{
+		for (int i = rl; i < rr; ++i)
+		{
+			int ti = j * w + i;
+			tile[ti] = rd.tile[index];
+			rm.tpos.insertLast(ti);
+			++index;
+		}
+	}
+	for (int i = 0; i < rd.hookData.length(); ++i)
+	{
+		HookData hd;
+		hd.pos.x = rd.hookData[i].pos.x + rl;
+		hd.pos.y = rd.hookData[i].pos.y + rt;
+		hd.orient = rd.hookData[i].orient;
+		hook.insertLast(hd);
+	}
+	
+	dun.room.insertLast(rm);
+	
+	// Build
+	
+	int roomCounter = 1;
+	while(roomCounter < roomTotal)
+	{
+		rm.id = rmid++;
+		rm.visited = true;	// TEMP
+		@rd = ad.roomData[p.randomRange(0, ad.roomData.length())];
+		int hookIndex = p.randomRange(0, hook.length());
+		auto @hda = hook[hookIndex];
+		
+		// Try to find matching hook
+		int tryCount = 0;
+		bool chk = false;
+		auto @hdb = rd.hookData[0];
+		while(tryCount < 20)
+		{
+			++tryCount;
+			@hdb = rd.hookData[p.randomRange(0, rd.hookData.length())];
+			
+			if ((hda.orient == "n" and hdb.orient == "s") or (hda.orient == "s" and hdb.orient == "n") or
+			(hda.orient == "w" and hdb.orient == "e") or (hda.orient == "e" and hdb.orient == "w"))
+			{
+				chk = true;
+				break;
+			}
+		}
+		
+		if (!chk) continue;
+		
+		// Orientations
+		
+		int cl = 0;
+		int cr = 0;
+		int ct = 0;
+		int cb = 0;
+		
+		if (hdb.orient == "n")
+		{
+			rl = hda.pos.x - hdb.pos.x;
+			rr = rl + rd.size.x;
+			rt = hda.pos.y;
+			rb = rt + rd.size.y;
+			
+			cl = rl;
+			cr = rr;
+			ct = rt + 1;
+			cb = rb;
+		}
+		else if (hdb.orient == "s")
+		{
+			rl = hda.pos.x - hdb.pos.x;
+			rr = rl + rd.size.x;
+			rt = hda.pos.y - rd.size.y + 1;
+			rb = rt + rd.size.y;
+			
+			cl = rl;
+			cr = rr;
+			ct = rt;
+			cb = rb - 1;
+		}
+		else if (hdb.orient == "w")
+		{
+			rl = hda.pos.x;
+			rr = rl + rd.size.x;
+			rt = hda.pos.y - hdb.pos.y;
+			rb = rt + rd.size.y;
+			
+			cl = rl + 1;
+			cr = rr;
+			ct = rt;
+			cb = rb;
+		}
+		else
+		{
+			rl = hda.pos.x - rd.size.x + 1;
+			rr = rl + rd.size.x;
+			rt = hda.pos.y - hdb.pos.y;
+			rb = rt + rd.size.y;
+			
+			cl = rl;
+			cr = rr - 1;
+			ct = rt;
+			cb = rb;
+		}
+		
+		// bounds?
+		
+		if (rl < 1 or rr > w - 2 or rt < 1 or rb > h - 2) continue;
+		
+		// Empty space?
+		
+		chk = true;
+		for (int j = ct; j < cb; ++j)
+		{
+			for (int i = cl; i < cr; ++i)
+			{
+				int ti = j * w + i;
+				if (tile[ti] != 255)
+				{
+					chk = false;
+					break;
+				}
+			}
+		}
+		
+		if (!chk) continue;
+		
+		// Build!
+		
+		int index = 0;
+		for (int j = rt; j < rb; ++j)
+		{
+			for (int i = rl; i < rr; ++i)
+			{
+				int ti = j * w + i;
+				tile[ti] = rd.tile[index];
+				rm.tpos.insertLast(ti);
+				++index;
+			}
+		}
+		
+		// Clear walls at hook
+		
+		
+		
+		// Add room information to dungeon and update hooks
+		
+		hook.removeAt(hookIndex);
+		for (int i = 0; i < rd.hookData.length(); ++i)
+		{
+			HookData hd;
+			hd.pos.x = rd.hookData[i].pos.x + rl;
+			hd.pos.y = rd.hookData[i].pos.y + rt;
+			hd.orient = rd.hookData[i].orient;
+			hook.insertLast(hd);
+		}
+		
+		dun.room.insertLast(rm);
+		
+		
+		++roomCounter;
+	}
+	
+	
+	
+	
+	dun.tile = tile;
 	
 	gDungeon.insertLast(dun);
 	
@@ -582,8 +775,8 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	doorData.insertLast("rm2");
 	doorData.insertLast("1");
 	
-	gMaster.setReg("destx", 960);
-	gMaster.setReg("desty", 960);
+	gMaster.setReg("destx", 32 * 51);
+	gMaster.setReg("desty", 32 * 51);
 	p.createSceneData("D1", 3200, 3200, 100, 100);
 	p.addSceneLayer("D1", "terrain", false);
 	p.addSceneLayer("D1", "main", false);
