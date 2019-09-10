@@ -470,6 +470,15 @@ void WorldBuilder_removeBlockedRegions(ScriptComponent @p, array<array<int>> @ma
 	
 }
 
+class DoorData
+{
+	string orient;
+	int rm1;
+	int rm2;
+	Filler pos;
+	bool opened;
+}
+
 class Room
 {
 	int id;
@@ -482,6 +491,7 @@ class Dungeon
 	string name;
 	array<int> tile;
 	array<Room> room;
+	array<DoorData> doorData;
 	int startRoom;
 }
 
@@ -489,6 +499,7 @@ class HookData
 {
 	string orient;
 	Filler pos;
+	int roomid;
 }
 
 class RoomData
@@ -503,6 +514,7 @@ class AreaData
 {
 	string name;
 	string tileset;
+	int floorTile;
 	array<RoomData> roomData;
 }
 
@@ -523,6 +535,7 @@ void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 		AreaData ad;
 		ad.name = data[fi++];
 		ad.tileset = data[fi++];
+		ad.floorTile = parseInt(data[fi++]);
 		
 		int roomCount = 0;
 		int roomTotal = parseInt(data[fi++]);
@@ -570,8 +583,10 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	array<int> tile(w * h, 255);
 	array<HookData> hook;
 	int roomTotal = 5;
-	int rmid = 0;
+	int dunid = 0;
 	
+	int rmid = 0;
+
 	Dungeon dun;
 	dun.name = "D1";
 	dun.startRoom = 0;
@@ -607,6 +622,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		hd.pos.x = rd.hookData[i].pos.x + rl;
 		hd.pos.y = rd.hookData[i].pos.y + rt;
 		hd.orient = rd.hookData[i].orient;
+		hd.roomid = rm.id;
 		hook.insertLast(hd);
 	}
 	
@@ -617,8 +633,8 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	int roomCounter = 1;
 	while(roomCounter < roomTotal)
 	{
-		rm.id = rmid++;
-		rm.visited = true;	// TEMP
+		Room rm;
+		rm.visited = false;
 		@rd = ad.roomData[p.randomRange(0, ad.roomData.length())];
 		int hookIndex = p.randomRange(0, hook.length());
 		auto @hda = hook[hookIndex];
@@ -722,6 +738,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		
 		// Build!
 		
+		rm.id = rmid++;
 		int index = 0;
 		for (int j = rt; j < rb; ++j)
 		{
@@ -736,7 +753,27 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		
 		// Clear walls at hook
 		
+		int hti = hda.pos.y * w + hda.pos.x;
+		tile[hti] = ad.floorTile;
+		if (hdb.orient == "n" or hdb.orient == "s")
+		{
+			hti += 1;
+		}
+		else
+		{
+			hti += w;
+		}
+		tile[hti] = ad.floorTile;
 		
+		// Door data
+		
+		DoorData dd;
+		dd.rm1 = hda.roomid;
+		dd.rm2 = rm.id;
+		dd.pos = hda.pos;
+		dd.orient = hda.orient;
+		dd.opened = false;
+		dun.doorData.insertLast(dd);
 		
 		// Add room information to dungeon and update hooks
 		
@@ -747,11 +784,11 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 			hd.pos.x = rd.hookData[i].pos.x + rl;
 			hd.pos.y = rd.hookData[i].pos.y + rt;
 			hd.orient = rd.hookData[i].orient;
+			hd.roomid = rm.id;
 			hook.insertLast(hd);
 		}
 		
 		dun.room.insertLast(rm);
-		
 		
 		++roomCounter;
 	}
