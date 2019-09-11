@@ -42,7 +42,7 @@ void DungeonLogic_main(ScriptComponent @p)
 		auto @rm = dun.room[i];
 		for (int j = 0; j < rm.tpos.length(); ++j)
 		{
-			p.setTile(rm.tpos[j], 255);
+			p.setTile(rm.tpos[j], dun.baktile);
 		}
 	}
 	
