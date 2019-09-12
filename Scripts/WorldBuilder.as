@@ -477,6 +477,7 @@ class DoorData
 	int rm2;
 	Filler pos;
 	bool opened;
+	bool spawned = false;
 }
 
 class Room
@@ -519,6 +520,7 @@ class AreaData
 	string tileset;
 	int baktile;
 	int floorTile;
+	int wallTile;
 	array<RoomData> roomData;
 }
 
@@ -541,6 +543,7 @@ void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 		ad.tileset = data[fi++];
 		ad.baktile = parseInt(data[fi++]);
 		ad.floorTile = parseInt(data[fi++]);
+		ad.wallTile = parseInt(data[fi++]);
 		
 		int roomCount = 0;
 		int roomTotal = parseInt(data[fi++]);
@@ -614,6 +617,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	array<HookData> hook;
 	int roomTotal = 20;
 	int dunid = 0;
+	int connectivity = 5;
 	
 	int rmid = 0;
 	
@@ -821,7 +825,6 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		
 		// Add room information to dungeon and update hooks
 		
-		hook.removeAt(hookIndex);
 		for (int i = 0; i < rd.hookData.length(); ++i)
 		{
 			HookData hd;
@@ -829,30 +832,286 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 			hd.pos.y = rd.hookData[i].pos.y + rt;
 			hd.orient = rd.hookData[i].orient;
 			hd.roomid = rm.id;
-			hook.insertLast(hd);
+			if (hd.pos.x != hda.pos.x or hd.pos.y != hda.pos.y) hook.insertLast(hd);
 		}
+		hook.removeAt(hookIndex);
 		
 		dun.room.insertLast(rm);
 		
 		++roomCounter;
 	}
 	
-	dun.tile = tile;
-	
-	gDungeon.insertLast(dun);
-	
-	int sx = 0;
-	int sy = 0;
-	while(true)
+	// Connectivity
+		
+	int connectCount = 0;
+	int tryCount = 0;
+	while(connectCount < connectivity and tryCount < 500)
 	{
-		int r = p.randomRange(0, tile.length());
-		if (tile[r] == ad.floorTile)
+		++tryCount;
+		
+		// Select two hooks that don't share the same room id
+		
+		auto @ha = hook[p.randomRange(0, hook.length())];
+		HookData @hb = null;
+		while(true)
 		{
-			sx = (r % w) * 32;
-			sy = (r / w) * 32;
-			break;
+			@hb = hook[p.randomRange(0, hook.length())];
+			if (hb !is ha and ha.roomid != hb.roomid) break;
 		}
+		
+		// Create cur start and determine starting direction and destination
+		
+		
+		int destx = hb.pos.x;
+		int desty = hb.pos.y;
+		string destOrient = hb.orient;
+		
+		if (destOrient == "n")
+		{
+			desty -= 2;
+		}
+		else if (destOrient == "s")
+		{
+			desty += 1; 
+		}
+		else if (destOrient == "w")
+		{
+			destx -= 2;
+		}
+		else if (destOrient == "e")
+		{
+			destx += 1;
+		}
+		
+		Filler cur = ha.pos;
+		int mx = 0;
+		int my = 0;
+		string orient;
+		
+		if (ha.orient == "n")
+		{
+			cur.y -= 2;
+			int dx = destx - cur.x;
+			if (dx < 0)
+			{
+				orient = "w";
+				mx = -1;
+			}
+			else
+			{
+				orient = "e";
+				mx = 1;
+			}
+		}
+		else if (ha.orient == "s")
+		{
+			cur.y += 1;
+			int dx = destx - cur.x;
+			if (dx < 0)
+			{
+				orient = "w";
+				mx = -1;
+			}
+			else
+			{
+				orient = "e";
+				mx = 1;
+			}
+		}
+		else if (ha.orient == "w")
+		{
+			cur.x -= 2;
+			int dy = desty - cur.y;
+			if (dy < 0)
+			{
+				orient = "n";
+				my = -1;
+			}
+			else
+			{
+				orient = "s";
+				my = 1;
+			}
+		}
+		else if (ha.orient == "e")
+		{
+			cur.x += 1;
+			int dy = desty - cur.y;
+			if (dy < 0)
+			{
+				orient = "n";
+				my = -1;
+			}
+			else
+			{
+				orient = "s";
+				my = 1;
+			}
+		}
+		
+		// Scan loop
+		
+		bool pass = true;
+		array<Filler> path;
+		while(true)
+		{
+			// Bounds & scan
+			int x = cur.x;
+			int y = cur.y;
+			
+			
+			if (x < 1 or x > w - 3 or y < 1 or y > h - 3)
+			{
+				pass = false;
+				break;
+			}
+			
+			for (int j = y; j < y + 2; ++j)
+			{
+				for (int i = x; i < x + 2; ++i)
+				{
+					int ti = j * w + i;
+					if (tile[ti] != ad.baktile)
+					{
+						pass = false;
+					}
+				}
+			}
+			
+			if (!pass) break;
+			
+			path.insertLast(cur);
+			
+			// Destination?
+			
+			if (x == destx and y == desty) break;
+			
+			// Reorient if necessary and move
+			
+			if (orient == "n" or orient == "s")
+			{
+				if (y == desty)
+				{
+					if (x > destx)
+					{
+						orient = "w";
+						my = 0;
+						mx = -1;
+					}
+					else
+					{
+						orient = "e";
+						my = 0;
+						mx = 1;
+					}
+				}
+			}
+			else
+			{
+				if (x == destx)
+				{
+					if (y > desty)
+					{
+						orient = "n";
+						mx = 0;
+						my = -1;
+					}
+					else
+					{
+						orient = "s";
+						mx = 0;
+						my = 1;
+					}
+				}
+			}
+			
+			cur.x += mx;
+			cur.y += my;
+		}
+		
+		if (!pass) continue;
+		
+		// Build!
+		++connectCount;
+		
+		array<int> passageTiles;
+		
+		// Walls
+		
+		for (int k = 0; k < path.length(); ++k)
+		{
+			Filler tl;
+			tl.x = path[k].x - 1;
+			tl.y = path[k].y - 1;
+			for (int j = tl.y; j < tl.y + 4; ++j)
+			{
+				for (int i = tl.x; i < tl.x + 4; ++i)
+				{
+					int ti = j * w + i;
+					tile[ti] = ad.wallTile;
+					if (passageTiles.find(ti) < 0) passageTiles.insertLast(ti);
+				}
+			}
+		}
+		
+		// Room data
+		
+		Room prm;
+		prm.id = rmid++;
+		prm.visited = false;
+		prm.tpos = passageTiles;
+		dun.room.insertLast(prm);
+		
+		// Floor;
+		
+		for (int k = 0; k < path.length(); ++k)
+		{
+			auto @tl = path[k];
+			for (int j = tl.y; j < tl.y + 2; ++j)
+			{
+				for (int i = tl.x; i < tl.x + 2; ++i)
+				{
+					int ti = j * w + i;
+					tile[ti] = ad.floorTile;
+				}
+			}
+		}
+		
+		// Clear hooks
+		
+		int anchorA = ha.pos.y * w + ha.pos.x;
+		tile[anchorA] = ad.floorTile;
+		if (ha.orient == "n" or ha.orient == "s") tile[anchorA + 1] = ad.floorTile;
+		else tile[anchorA + w] = ad.floorTile;
+		
+		int anchorB = hb.pos.y * w + hb.pos.x;
+		tile[anchorB] = ad.floorTile;
+		if (hb.orient == "n" or hb.orient == "s") tile[anchorB + 1] = ad.floorTile;
+		else tile[anchorB + w] = ad.floorTile;
+		
+		// Door data
+		
+		DoorData pdd1;
+		pdd1.rm1 = ha.roomid;
+		pdd1.rm2 = prm.id;
+		pdd1.pos = ha.pos;
+		pdd1.orient = ha.orient;
+		pdd1.opened = false;
+		dun.doorData.insertLast(pdd1);
+		
+		DoorData pdd2;
+		pdd2.rm1 = hb.roomid;
+		pdd2.rm2 = prm.id;
+		pdd2.pos = hb.pos;
+		pdd2.orient = hb.orient;
+		pdd2.opened = false;
+		dun.doorData.insertLast(pdd2);
+		
 	}
+	p.log("Area built. Rooms: " + roomTotal + ", Passages: " + connectCount);
+	
+	dun.tile = tile;
+	gDungeon.insertLast(dun);	
 	
 	array<string> dunData;
 	dunData.insertLast("dunid");
@@ -867,7 +1126,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	p.addSceneDataEntity("D1", "DungeonLogic", 1, true, "HUD", 0.0, 0.0, false, dunData);
 	p.addSceneBase("D1", "PlayBase");
 	p.addSceneTilemap("D1", "U5", "terrain", 100, 100, tile);
-	p.addSceneEntity("D1", "Scroll", 1, true, "main", sx, sy, false);
+	//p.addSceneEntity("D1", "Scroll", 1, true, "main", sx, sy, false);
 	
 	p.setTextString("");
 	

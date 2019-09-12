@@ -38,14 +38,25 @@ void DunDoor_onCollision(ScriptComponent @p, Entity @e, PhysicsComponent@pc)
 			}
 		}
 		
+		// Spawn routines
+		
+		Room @rmh1 = null;
+		Room @rmh2 = null;
+		
+		for (int k = 0; k < dun.room.length(); ++k)
+		{
+			if (dun.room[k].id == rm1) @rmh1 = dun.room[k];
+			if (dun.room[k].id == rm2) @rmh2 = dun.room[k];
+		}
+		
 		// Place doors
-	
+		
 		for (int i = 0; i < dun.doorData.length(); ++i)
 		{
 			auto @dd = dun.doorData[i];
-			if (dd.rm1 == rm1 or dd.rm2 == rm1 or dd.rm1 == rm2 or dd.rm2 == rm2)
+			if (((dd.rm1 == rm1 or dd.rm2 == rm1) and !rmh1.visited) or ((dd.rm1 == rm2 or dd.rm2 == rm2) and !rmh2.visited))
 			{
-				if (!dd.opened)
+				if (!dd.opened and !dd.spawned)
 				{
 					if (dd.orient == "n" or dd.orient == "s")
 					{
@@ -63,9 +74,13 @@ void DunDoor_onCollision(ScriptComponent @p, Entity @e, PhysicsComponent@pc)
 						handle.setReg("rm1", dd.rm1);
 						handle.setReg("rm2", dd.rm2);
 					}
+					dd.spawned = true;
 				}
 			}
 		}
+		
+		rmh1.visited = true;
+		rmh2.visited = true;
 		
 		p.despawn();
 	}
