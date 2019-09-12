@@ -506,6 +506,8 @@ class HookData
 class RoomData
 {
 	string name;
+	string chance;
+	bool unique;
 	Filler size;
 	array<int> tile;
 	array<HookData> hookData;
@@ -547,6 +549,9 @@ void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 		{
 			RoomData rd;
 			rd.name = data[fi++];
+			rd.chance = data[fi++];
+			if (data[fi++] == "unique") rd.unique = true;
+			else rd.unique = false;
 			rd.size.x = parseInt(data[fi++]);
 			rd.size.y = parseInt(data[fi++]);
 			for (int j = 0; j < rd.size.x * rd.size.y; ++j)
@@ -576,6 +581,29 @@ void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 	}
 }
 
+RoomData @WorldBuilder_getRoom(ScriptComponent @p, AreaData @ad, array<string> @ur)
+{	
+	while (true)
+	{
+		int chanceRoll = p.randomRange(0, 10);
+		string chance;
+		if (chanceRoll < 6) chance = "common";
+		else if (chanceRoll < 9) chance = "uncommon";
+		else chance = "rare";
+		
+		auto @rd = ad.roomData[p.randomRange(0, ad.roomData.length())];
+		if (rd.chance == chance)
+		{
+			if (rd.unique)
+			{
+				if (ur.find(rd.name) >= 0) continue;
+			}
+			return rd;
+		}
+	}
+	return null;
+}
+
 void WorldBuilder_buildDungeon(ScriptComponent @p)
 {
 	
@@ -598,12 +626,16 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	dun.startRoom = 0;
 	dun.baktile = ad.baktile;
 	
+	array<string> uniqueRoom;
+	
 	// Starting room
 	
 	Room rm;
 	rm.id = rmid++;
 	rm.visited = true;
-	auto @rd = ad.roomData[p.randomRange(0, ad.roomData.length())];
+	auto @rd = WorldBuilder_getRoom(p, ad, uniqueRoom);
+	if (rd.unique) uniqueRoom.insertLast(rd.name);
+	
 	int rl = w / 2;
 	int rt = h / 2;
 	int rr = rl + rd.size.x;
@@ -643,7 +675,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 	{
 		Room rm;
 		rm.visited = false;
-		@rd = ad.roomData[p.randomRange(0, ad.roomData.length())];
+		@rd = WorldBuilder_getRoom(p, ad, uniqueRoom);
 		int hookIndex = p.randomRange(0, hook.length());
 		auto @hda = hook[hookIndex];
 		
@@ -746,6 +778,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		
 		// Build!
 		
+		if (rd.unique) uniqueRoom.insertLast(rd.name);
 		rm.id = rmid++;
 		int index = 0;
 		for (int j = rt; j < rb; ++j)
