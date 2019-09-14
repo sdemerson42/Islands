@@ -1,21 +1,25 @@
 void WorldBuilder_main(ScriptComponent @p)
 {
-	p.setTextString("Building island...");
+	p.setTextString("Building World...");
 	p.suspend();
 	//WorldBuilder_bigContinent(p);
 	
 	array<string> files;
 	files.insertLast("Data/Castle.txt");
 	WorldBuilder_readAreaData(p, files);
+	WorldBuilder_buildContinent(p, 200, 200);
+	WorldBuilder_buildDungeon(p, "Prison", "Castle", 200, 200, 30, 6); 
 	
-	WorldBuilder_buildDungeon(p);
+	p.setTextString("");
+	p.changeScene("Prison");
 }
 
-void WorldBuilder_bigContinent(ScriptComponent @p)
+void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 {
-	int w = 300;
-	int h = 300;
-
+	
+	p.setTextString("Building Continent...");
+	p.suspend(1);
+	
 	auto pmap = Perlin_makeNoise(p, w, h, 25, 25);
 	Perlin_rectangularMask(pmap, 10);
 	Perlin_circularMask(pmap, 50);
@@ -140,137 +144,6 @@ void WorldBuilder_bigContinent(ScriptComponent @p)
 	//p.addSceneBase("Perlin", "PlayBase");
 	p.addSceneTilemap("Perlin", "U5", "terrain", w, h, tiles);
 	//p.addSceneEntity("Perlin", "Scroll", 1, true, "main", wx - 32.0, wy - 32.0, false);
-	
-	p.changeScene("Perlin");
-}
-
-void WorldBuilder_island(ScriptComponent @p)
-{
-	int w = 300;
-	int h = 300;
-
-	auto pmap = Perlin_makeNoise(p, w, h, 25, 25);
-	Perlin_rectangularMask(pmap, 10);
-	Perlin_circularMask(pmap, 50);
-	
-	// Build Scene
-
-	// Translate tiles
-
-	array<int> tiles;
-
-	// Land, sea, lakes
-
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			// From .2, .3 water level...
-			auto val = pmap[i][j];
-			if (val < 0.2) tiles.insertLast(1);
-			else if (val < 0.3) tiles.insertLast(3);
-			else if (val < 0.6) tiles.insertLast(5);
-			else if (val < 0.8) tiles.insertLast(6);
-			else tiles.insertLast(8);
-		}
-	}
-
-	// Forests
-
-	auto tmap = Perlin_makeNoise(p, w, h, 25, 25);
-	int ti = 0;
-
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			if (tiles[ti] != 1 and tmap[i][j] > 0.5)
-			{
-				if (tmap[i][j] < 0.6) tiles[ti] = 8;
-				else if (tmap[i][j] < 0.8) tiles[ti] = 9;
-				else tiles[ti] = 10;
-			}
-			++ti;
-		}
-	}
-
-	// Mountains
-
-	tmap = Perlin_makeNoise(p, w, h, 25, 25);
-	ti = 0;
-
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			if (tiles[ti] != 1 and tmap[i][j] > 0.6)
-			{
-				if (tmap[i][j] < 0.8) tiles[ti] = 11;
-				else if (tmap[i][j] < 0.85) tiles[ti] = 12;
-				else tiles[ti] = 13;
-			}
-			++ti;
-		}
-	}
-	
-	// Convert tmap for further processing
-	
-	ti = 0;
-	array<array<int>> editMap(w, array<int>(h));
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			editMap[i][j] = tiles[ti];
-			++ti;
-		}
-	}
-	
-	array<int> btiles = {1, 10, 13};
-	
-	WorldBuilder_removeBlockedRegions(p, editMap, btiles, 1);
-	
-	// Convert back...
-	
-	ti = 0;
-	for (int j = 0; j < h; ++j)
-	{
-		for (int i = 0; i < w; ++i)
-		{
-			tiles[ti] = editMap[i][j];
-			++ti;
-		}
-	}
-	
-	p.log("Tilemap converted...");
-	
-	
-	// Start
-
-	int wts = 0;
-	while(tiles[wts] == 1 or tiles[wts] == 10 or tiles[wts] == 13)
-	{
-		wts = p.randomRange(0, tiles.length());
-	}
-
-	float wx = wts % w * 32.0f;
-	float wy = wts / w * 32.0f;
-	gMaster.setReg("destx", wx);
-	gMaster.setReg("desty", wy);
-	
-		
-	p.createSceneData("Perlin", w * 32, h * 32, 100, 100);
-	p.addSceneLayer("Perlin", "terrain", false);
-	p.addSceneLayer("Perlin", "main", false);
-	p.addSceneLayer("Perlin", "HUD", true);
-	p.addSceneEntity("Perlin", "MapLogic", 1, true, "HUD", 0.0, 0.0, false);
-	p.addSceneEntity("Perlin", "MapWizard", 1, true, "main", wx, wy, false);
-	//p.addSceneBase("Perlin", "PlayBase");
-	p.addSceneTilemap("Perlin", "U5", "terrain", w, h, tiles);
-	//p.addSceneEntity("Perlin", "Scroll", 1, true, "main", wx - 32.0, wy - 32.0, false);
-	
-	p.changeScene("Perlin");
-
 }
 
 class Filler
@@ -607,26 +480,28 @@ RoomData @WorldBuilder_getRoom(ScriptComponent @p, AreaData @ad, array<string> @
 	return null;
 }
 
-void WorldBuilder_buildDungeon(ScriptComponent @p)
+void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaName, int w, int h, int roomTotal, int connectivity)
 {
+
+	p.setTextString("Building Dungeon...");
+	p.suspend(1);
 	
-	// TEST
-	
-	int w = 100;
-	int h = 100;
 	array<HookData> hook;
-	int roomTotal = 20;
-	int dunid = 0;
-	int connectivity = 5;
-	
 	int rmid = 0;
-	
-	auto @ad = gAreaData[0];
+	AreaData @ad = null;
+	for (int k = 0; k < gAreaData.length(); ++k)
+	{
+		if (gAreaData[k].name == areaName)
+		{
+			@ad = gAreaData[k];
+			break;
+		}
+	}
 	
 	array<int> tile(w * h, ad.baktile);
 	
 	Dungeon dun;
-	dun.name = "D1";
+	dun.name = dunName;
 	dun.startRoom = 0;
 	dun.baktile = ad.baktile;
 	
@@ -845,7 +720,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		
 	int connectCount = 0;
 	int tryCount = 0;
-	while(connectCount < connectivity and tryCount < 500)
+	while(connectCount < connectivity and tryCount < roomTotal * 20)
 	{
 		++tryCount;
 		
@@ -1108,31 +983,26 @@ void WorldBuilder_buildDungeon(ScriptComponent @p)
 		dun.doorData.insertLast(pdd2);
 		
 	}
-	p.log("Area built. Rooms: " + roomTotal + ", Passages: " + connectCount);
+	p.log("Area " + dun.name + " built. Rooms: " + roomTotal + ", Passages: " + connectCount);
 	
 	dun.tile = tile;
 	gDungeon.insertLast(dun);	
 	
 	array<string> dunData;
 	dunData.insertLast("dunid");
-	dunData.insertLast("0");
+	string sdid = "";
+	sdid += gDungeon.length() - 1;
+	dunData.insertLast(sdid);
 	
-	gMaster.setReg("destx", 32 * 51);
-	gMaster.setReg("desty", 32 * 51);
-	p.createSceneData("D1", 3200, 3200, 100, 100);
-	p.addSceneLayer("D1", "terrain", false);
-	p.addSceneLayer("D1", "main", false);
-	p.addSceneLayer("D1", "HUD", true);
-	p.addSceneDataEntity("D1", "DungeonLogic", 1, true, "HUD", 0.0, 0.0, false, dunData);
-	p.addSceneBase("D1", "PlayBase");
-	p.addSceneTilemap("D1", "U5", "terrain", 100, 100, tile);
-	//p.addSceneEntity("D1", "Scroll", 1, true, "main", sx, sy, false);
-	
-	p.setTextString("");
-	
-	p.changeScene("D1");
-	
-	
+	gMaster.setReg("destx", 32 * (w / 2 + 1));
+	gMaster.setReg("desty", 32 * (h / 2 + 1));
+	p.createSceneData(dunName, w * 32, h * 32, 100, 100);
+	p.addSceneLayer(dunName, "terrain", false);
+	p.addSceneLayer(dunName, "main", false);
+	p.addSceneLayer(dunName, "HUD", true);
+	p.addSceneDataEntity(dunName, "DungeonLogic", 1, true, "HUD", 0.0, 0.0, false, dunData);
+	p.addSceneBase(dunName, "PlayBase");
+	p.addSceneTilemap(dunName, "U5", "terrain", w, h, tile);
 }
 
 
