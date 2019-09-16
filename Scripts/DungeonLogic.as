@@ -11,7 +11,7 @@ void DungeonLogic_main(ScriptComponent @p)
 	for (int i = 0; i < dun.doorData.length(); ++i)
 	{
 		auto @dd = dun.doorData[i];
-		if (dd.rm1 == sid or dd.rm2 == sid)
+		if ((dd.rm1 == sid or dd.rm2 == sid) or dd.spawned)
 		{
 			if (!dd.opened)
 			{

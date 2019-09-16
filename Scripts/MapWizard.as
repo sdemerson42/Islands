@@ -1,11 +1,17 @@
-ScriptComponent @gMapWizard;
-
 void MapWizard_main(ScriptComponent @p)
 {
+	p.log("MapWizard OK");
 	// Init happens here if necessary
-	@gMapWizard = p; 
-	p.setReg("food", 100);
 	p.setReg("mcounter", 0);
+	
+	if (gMaster.getReg("destx") != 0)
+	{
+		p.setPosition(gMaster.getReg("destx"), gMaster.getReg("desty"));
+	}
+	
+	auto pos = p.position();
+	p.setViewCenter(pos.x, pos.y);
+	
 	p.setMainFunction("mainState");
 
 }
@@ -15,6 +21,14 @@ void MapWizard_mainState(ScriptComponent @p)
 	
 	while(true)
 	{
+		if (gMaster.getReg("gameState") != 0)
+		{
+			p.setMomentum(0.0, 0.0);
+			p.playAnimation("idle");
+			p.suspend();
+			continue;
+		}
+		
 		auto pos = p.position();
 		p.setViewCenter(pos.x, pos.y);
 		// Controls
@@ -28,7 +42,7 @@ void MapWizard_mainState(ScriptComponent @p)
 			if (val >= 180)
 			{
 				p.setReg("mcounter", 0);
-				p.modReg("food", -1);
+				gMaster.modReg("food", -1);
 			}
 		}
 
@@ -44,7 +58,7 @@ bool MapWizard_move(ScriptComponent @p, const InputEvent &input)
 	bool moved = true;
 	auto pos = p.position();
 	int ut = p.tileAtPosition(pos.x + 12.0, pos.y + 12.0);
-	float speed = 3.0;
+	float speed = 4.0;
 	if (ut == 3 or ut == 9 or ut == 11) speed = 2.0;
 	else if (ut == 12) speed = 1.0;
 

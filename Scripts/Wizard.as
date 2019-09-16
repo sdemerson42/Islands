@@ -6,6 +6,10 @@ void Wizard_main(ScriptComponent @p)
 	{
 		p.setPosition(gMaster.getReg("destx"), gMaster.getReg("desty"));
 	}
+	
+	auto pos = p.position();
+	p.setViewCenter(pos.x, pos.y);
+	
 	p.setMainFunction("mainState");
 	p.log("Wizard OK");
 }
@@ -27,6 +31,14 @@ void Wizard_mainState(ScriptComponent @p)
 {
 	while(true)
 	{
+		if (gMaster.getReg("gameState") != 0)
+		{
+			p.setMomentum(0.0, 0.0);
+			p.playAnimation("idle");
+			p.suspend();
+			continue;
+		}
+		
 		auto pos = p.position();
 		p.setViewCenter(pos.x, pos.y);
 		// Controls
