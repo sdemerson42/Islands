@@ -22,6 +22,19 @@ void DunDoor_onCollision(ScriptComponent @p, Entity @e, PhysicsComponent@pc)
 				{
 					p.setTile(rm.tpos[j], dun.tile[rm.tpos[j]]);
 				}
+				
+				// Spawn mobs
+				
+				if (!rm.visited)
+				{
+					auto @md = rm.mobData;
+					for (int k = 0; k < md.length(); ++k)
+					{
+						auto handle = p.forceSpawn(md[k].tag, "main");
+						if (handle !is null) handle.setPosition(md[k].position.x, md[k].position.y);
+					}
+				}
+				
 				++clearCount;
 				if (clearCount == 2) break;
 			}

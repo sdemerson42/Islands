@@ -58,4 +58,16 @@ void DungeonLogic_main(ScriptComponent @p)
 			}
 		}
 	}
+	
+	// Spawn active mobs
+	
+	for (int i = 0; i < dun.spawnedMobs.length(); ++i)
+	{
+		auto @mob = dun.spawnedMobs[i];
+		auto handle = p.forceSpawn(mob.tag, "main");
+		if (handle !is null)
+		{
+			handle.setPosition(mob.position.x, mob.position.y);
+		}
+	}
 }

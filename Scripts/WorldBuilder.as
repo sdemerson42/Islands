@@ -1,3 +1,85 @@
+class Coord
+{
+	Coord() {}
+	Coord(int xx, int yy)
+	{
+		x = xx;
+		y = yy;
+	}
+	int x;
+	int y;
+}
+
+class DoorData
+{
+	string orient;
+	int rm1;
+	int rm2;
+	Coord pos;
+	bool opened;
+	bool spawned = false;
+}
+
+class MobData
+{
+	string tag;
+	Coord position;
+}
+
+class Room
+{
+	int id;
+	array<int> tpos;
+	bool visited;
+	array<MobData> mobData;
+	Coord size;
+}
+
+class Dungeon
+{
+	string name;
+	Coord size;
+	string tileset;
+	array<int> tile;
+	array<Room> room;
+	array<DoorData> doorData;
+	int startRoom;
+	int baktile;
+	Coord startPosition;
+	Coord worldPosition;
+	array<MobData> spawnedMobs;
+}
+
+class HookData
+{
+	string orient;
+	Coord pos;
+	int roomid;
+}
+
+class RoomData
+{
+	string name;
+	string chance;
+	bool unique;
+	Coord size;
+	array<int> tile;
+	array<HookData> hookData;
+}
+
+class AreaData
+{
+	string name;
+	string tileset;
+	int baktile;
+	int floorTile;
+	int wallTile;
+	array<RoomData> roomData;
+}
+
+array<Dungeon> gDungeon;
+array<AreaData> gAreaData;
+
 void WorldBuilder_main(ScriptComponent @p)
 {
 	p.setTextString("Building World...");
@@ -164,20 +246,7 @@ void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 	p.addSceneTilemap("World", "U5", "terrain", w, h, tiles);
 }
 
-class Filler
-{
-	Filler() {}
-	Filler(int xx, int yy)
-	{
-		x = xx;
-		y = yy;
-	}
-	int x;
-	int y;
-}
-
-
-array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int>> @map, array<int> @btiles)
+array<array<Coord>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int>> @map, array<int> @btiles)
 {
 	auto w = map.length();
 	auto h = map[0].length();
@@ -201,7 +270,7 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 		}
 	}
 	
-	array<array<Filler>> region;
+	array<array<Coord>> region;
 	
 	for (int j = 0; j < h; ++j)
 	{
@@ -210,11 +279,11 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 				// Scan for region, then fill and store data.
 				if (smap[i][j] == 0)
 				{
-					array<Filler> filler;
-					filler.insertLast(Filler(i, j));
+					array<Coord> filler;
+					filler.insertLast(Coord(i, j));
 					
-					region.insertLast(array<Filler>());
-					array<Filler> @cregion = @region[region.length() - 1];
+					region.insertLast(array<Coord>());
+					array<Coord> @cregion = @region[region.length() - 1];
 					
 					// Fill and count region
 					
@@ -242,7 +311,7 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 								}
 								if (ok)
 								{
-									filler.insertLast(Filler(cx, cy));
+									filler.insertLast(Coord(cx, cy));
 								}
 							}
 						}
@@ -265,7 +334,7 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 								}
 								if (ok)
 								{
-									filler.insertLast(Filler(cx, cy));
+									filler.insertLast(Coord(cx, cy));
 								}
 							}
 						}
@@ -288,7 +357,7 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 								}
 								if (ok)
 								{
-									filler.insertLast(Filler(cx, cy));
+									filler.insertLast(Coord(cx, cy));
 								}
 							}
 						}
@@ -311,7 +380,7 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 								}
 								if (ok)
 								{
-									filler.insertLast(Filler(cx, cy));
+									filler.insertLast(Coord(cx, cy));
 								}
 							}
 						}
@@ -319,7 +388,7 @@ array<array<Filler>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int
 						// Fill map, remove current filler, and update region.
 						
 						smap[x][y] = 1;
-						cregion.insertLast(Filler(x, y));
+						cregion.insertLast(Coord(x, y));
 						filler.removeAt(0);
 					}
 					p.log("Region mapped. Size: " + region[region.length() - 1].length());
@@ -361,64 +430,6 @@ void WorldBuilder_removeBlockedRegions(ScriptComponent @p, array<array<int>> @ma
 	
 }
 
-class DoorData
-{
-	string orient;
-	int rm1;
-	int rm2;
-	Filler pos;
-	bool opened;
-	bool spawned = false;
-}
-
-class Room
-{
-	int id;
-	array<int> tpos;
-	bool visited;
-}
-
-class Dungeon
-{
-	string name;
-	array<int> tile;
-	array<Room> room;
-	array<DoorData> doorData;
-	int startRoom;
-	int baktile;
-	Filler startPosition;
-	Filler worldPosition;
-}
-
-class HookData
-{
-	string orient;
-	Filler pos;
-	int roomid;
-}
-
-class RoomData
-{
-	string name;
-	string chance;
-	bool unique;
-	Filler size;
-	array<int> tile;
-	array<HookData> hookData;
-}
-
-class AreaData
-{
-	string name;
-	string tileset;
-	int baktile;
-	int floorTile;
-	int wallTile;
-	array<RoomData> roomData;
-}
-
-array<Dungeon> gDungeon;
-array<AreaData> gAreaData;
 
 void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 {
@@ -459,7 +470,7 @@ void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 			for (int j = 0; j < hookTotal; ++j)
 			{
 				string orient = data[fi++];
-				Filler pos;
+				Coord pos;
 				pos.x = parseInt(data[fi++]);
 				pos.y = parseInt(data[fi++]);
 				HookData hd;
@@ -500,6 +511,45 @@ RoomData @WorldBuilder_getRoom(ScriptComponent @p, AreaData @ad, array<string> @
 	return null;
 }
 
+void WorldBuilder_addMobData(ScriptComponent @p, Dungeon @dun)
+{
+	// TEST - Currently passages are given no size and will not spawn mobs.
+	// Add mobs to dungeon rooms
+	
+	auto block = p.blockedTiles(dun.tileset);
+	
+	for (int k = 0; k < dun.room.length(); ++k)
+	{
+		auto @rm = dun.room[k];
+		if (rm.size.x == 0 or rm.size.y == 0) continue;
+		
+		// For now - randomly place 0 - 3 bats. NOTE: Not yet checking for overlapping spawns!
+		
+		int r = p.randomRange(0, 4);
+		for (int m = 0; m < r; ++m)
+		{
+			int mx = 0;
+			int my = 0;
+			while(true)
+			{
+				int ti = rm.tpos[p.randomRange(0, rm.tpos.length())];
+				if (block.find(dun.tile[ti]) < 0)
+				{
+					mx = (ti % dun.size.x) * 32;
+					my = (ti / dun.size.x) * 32;
+					break;
+				}
+			}
+			MobData md;
+			md.tag = "Bat";
+			md.position.x = mx;
+			md.position.y = my;
+			rm.mobData.insertLast(md);
+		}
+	}
+	
+}
+
 void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaName, int w, int h, int roomTotal, int connectivity, int worldx, int worldy)
 {
 
@@ -522,6 +572,8 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 	
 	Dungeon dun;
 	dun.name = dunName;
+	dun.size.x = w;
+	dun.size.y = h;
 	dun.startRoom = 0;
 	dun.baktile = ad.baktile;
 	
@@ -687,6 +739,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 		
 		if (rd.unique) uniqueRoom.insertLast(rd.name);
 		rm.id = rmid++;
+		rm.size = rd.size;
 		int index = 0;
 		for (int j = rt; j < rb; ++j)
 		{
@@ -786,7 +839,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 			destx += 1;
 		}
 		
-		Filler cur = ha.pos;
+		Coord cur = ha.pos;
 		int mx = 0;
 		int my = 0;
 		string orient;
@@ -855,7 +908,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 		// Scan loop
 		
 		bool pass = true;
-		array<Filler> path;
+		array<Coord> path;
 		while(true)
 		{
 			// Bounds & scan
@@ -943,7 +996,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 		
 		for (int k = 0; k < path.length(); ++k)
 		{
-			Filler tl;
+			Coord tl;
 			tl.x = path[k].x - 1;
 			tl.y = path[k].y - 1;
 			for (int j = tl.y; j < tl.y + 4; ++j)
@@ -961,6 +1014,8 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 		
 		Room prm;
 		prm.id = rmid++;
+		prm.size.x = 0;
+		prm.size.y = 0;
 		prm.visited = false;
 		prm.tpos = passageTiles;
 		dun.room.insertLast(prm);
@@ -1014,7 +1069,13 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 	p.log("Area " + dun.name + " built. Rooms: " + roomTotal + ", Passages: " + connectCount);
 	
 	dun.tile = tile;
-	gDungeon.insertLast(dun);	
+	dun.tileset = ad.tileset;
+	
+	// Add MobData
+	
+	WorldBuilder_addMobData(p, dun);
+	
+	gDungeon.insertLast(dun);
 	
 	array<string> dunData;
 	dunData.insertLast("dunid");
@@ -1033,7 +1094,7 @@ void WorldBuilder_buildDungeon(ScriptComponent @p, string dunName, string areaNa
 	p.addSceneDataEntity(dunName, "DungeonLogic", 1, true, "HUD", 0.0, 0.0, false, dunData);
 	p.addSceneDataEntity(dunName, "AreaExit", 1, true, "main", dun.startPosition.x, dun.startPosition.y - 32, false, exitData);
 	p.addSceneBase(dunName, "PlayBase");
-	p.addSceneTilemap(dunName, "U5", "terrain", w, h, tile);
+	p.addSceneTilemap(dunName, ad.tileset, "terrain", w, h, tile);
 }
 
 

@@ -4,7 +4,7 @@ void Master_main(ScriptComponent @p)
 {
 	@gMaster = p;
 
-	p.setReg("wizardSpell", -1);
+	p.setReg("wizardSpell", 0);
 	p.setReg("gameState", 0);
 	
 	// Test regs
