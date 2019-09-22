@@ -17,7 +17,7 @@ void Master_main(ScriptComponent @p)
 	
 	while(true)
 	{
-		if (p.getReg("gameState") != 0) Master_transition();
+		if (p.getReg("gameState") < 0) Master_transition();
 		p.suspend();
 	}
 }
@@ -71,4 +71,24 @@ void Master_transition()
 			gMaster.setReg("gameState", 0);
 		}
 	}
+}
+
+void Master_beginDialogue(string s)
+{
+	gMaster.setReg("gameState", 1);
+	auto handle = gMaster.forceSpawn("Dialogue", "HUD");
+	handle.setPosition(200, 200);
+	handle.setTextString(s);
+	gMaster.setScript("dialogue", handle);
+}
+
+void Master_continueDialogue(string s)
+{
+	gMaster.getScript("dialogue").setTextString(s);
+}
+
+void Master_endDialogue()
+{
+	gMaster.getScript("dialogue").despawn();
+	gMaster.setReg("gameState", 0);
 }

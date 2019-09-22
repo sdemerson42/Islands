@@ -89,7 +89,7 @@ void WorldBuilder_main(ScriptComponent @p)
 	array<string> files;
 	files.insertLast("Data/Castle.txt");
 	WorldBuilder_readAreaData(p, files);
-	WorldBuilder_buildContinent(p, 100, 100);
+	WorldBuilder_buildContinent(p, 300, 300);
 	
 	p.setTextString("");
 	p.changeScene("World");

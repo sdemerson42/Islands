@@ -29,6 +29,7 @@ Wizard
 Tag {"Wizard"}
 Render { 32.0, 320.0, 32.0, 32.0, "Assets/Textures/U5A.png" }
 Physics { 2, 2, 28, 28, 0, 0, 100, 0.01, true, false, false }
+PhysicsIgnore {"Mob"}
 Script { "Wizard", "Scripts/Wizard.as" }
 Animation { "idle", 1, false, 1, 32, 320, 32, 32 }
 Animation { "walking", 12, true, 4,
@@ -166,4 +167,20 @@ Animation { "default", 12, true, 4,
 672, 384, 32, 32,
 704, 384, 32, 32,
 672, 384, 32, 32 }
+}
+
+Dialogue
+{
+Tag{"Dialogue"}
+Script{"Dialogue", "Scripts/Dialogue.as"}
+Render{0.0, 0.0, 500.0, 300.0, "Assets/Textures/DBox.png"}
+Text{"Some words!", "Assets/Fonts/sansation.ttf", 30.0, 30.0, 30, 255, 255, 255, 255}
+}
+
+ClueChest
+{
+Tag {"ClueChest"}
+Render { 32.0, 256.0, 32.0, 32.0, "Assets/Textures/U5A.png" }
+Physics { 2, 2, 28, 28, 0, 0, 0.0, 0.01, true, false, false }
+Script { "ClueChest", "Scripts/ClueChest.as" }
 }
