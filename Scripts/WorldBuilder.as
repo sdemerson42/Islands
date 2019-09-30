@@ -77,8 +77,137 @@ class AreaData
 	array<RoomData> roomData;
 }
 
+class NaturalFeatureData
+{
+	string name;
+	Coord centerPosition;
+	array<int> tpos;
+}
+
 array<Dungeon> gDungeon;
 array<AreaData> gAreaData;
+array<NaturalFeatureData> gNaturalFeature;
+
+string WorldBuilder_directionsTest(ScriptComponent @p, Coord b, Coord e)
+{
+	const float PI = 3.14159;
+	Coord c;
+	c.x = (b.x + e.x) / 2;
+	c.y = (b.y + e.y) / 2;
+	
+	// Find natural feature nearest the center point
+	
+	int dist = 1000000;
+	NaturalFeatureData @midFeature;
+	for (int i = 0; i < gNaturalFeature.length(); ++i)
+	{
+		auto @nfd = gNaturalFeature[i];
+		int ld = sqrt((nfd.centerPosition.x - c.x) ** 2 + (nfd.centerPosition.y - c.y) **2);
+		if (ld < dist)
+		{
+			dist = ld;
+			@midFeature = nfd;
+		}
+	}
+	
+	dist = sqrt((midFeature.centerPosition.x - b.x) ** 2 + (midFeature.centerPosition.y - b.y) ** 2);
+	
+	p.log("Start: " + b.x + ", " + b.y);
+	p.log("End: " + e.x + ", " + e.y);
+	p.log("Feature: " + midFeature.centerPosition.x + ", " + midFeature.centerPosition.y);
+	
+	string dir;
+	int dx = midFeature.centerPosition.x - b.x;
+	int dy = (midFeature.centerPosition.y - b.y) * -1;
+	float deg;
+	if (dx == 0)
+	{
+		if (dy > 0) dir = "north";
+		else dir = "south";
+	}
+	else
+	{
+		float tang = float(dy) / float(dx);
+		float rads = atan(tang);
+		deg = rads * 180.0 / PI;
+		
+		if (dx > 0)
+		{
+			if (dy < 0) deg = 360 + deg;
+		}
+		else
+		{
+			deg = 180 + deg;
+		}
+	}
+	
+	if (deg >= 348.75 or deg <= 11.25) dir = "east";
+	else if (deg >= 348.75 - 22.5 * 1) dir = "east-southeast";
+	else if (deg >= 348.75 - 22.5 * 2) dir = "southeast";
+	else if (deg >= 348.75 - 22.5 * 3) dir = "south-southeast";
+	else if (deg >= 348.75 - 22.5 * 4) dir = "south";
+	else if (deg >= 348.75 - 22.5 * 5) dir = "south-southwest";
+	else if (deg >= 348.75 - 22.5 * 6) dir = "southwest";
+	else if (deg >= 348.75 - 22.5 * 7) dir = "west-southwest";
+	else if (deg >= 348.75 - 22.5 * 8) dir = "west";
+	else if (deg >= 348.75 - 22.5 * 9) dir = "west-northwest";
+	else if (deg >= 348.75 - 22.5 * 10) dir = "northwest";
+	else if (deg >= 348.75 - 22.5 * 11) dir = "north-northwest";
+	else if (deg >= 348.75 - 22.5 * 12) dir = "north";
+	else if (deg >= 348.75 - 22.5 * 13) dir = "north-northeast";
+	else if (deg >= 348.75 - 22.5 * 14) dir = "northeast";
+	else dir = "east-northeast";
+	
+	
+	string msg;
+	msg += ("Travel " + (dist / 300) + " days\n" + dir + " toward\n" + midFeature.name + ",\n");
+	
+	dx = e.x - midFeature.centerPosition.x;
+	dy = (e.y - midFeature.centerPosition.y) * -1;
+	if (dx == 0)
+	{
+		if (dy > 0) dir = "north";
+		else dir = "south";
+	}
+	else
+	{
+		float tang = float(dy) / float(dx);
+		float rads = atan(tang);
+		deg = rads * 180.0 / PI;
+		
+		if (dx > 0)
+		{
+			if (dy < 0) deg = 360 + deg;
+		}
+		else
+		{
+			deg = 180 + deg;
+		}
+	}
+	
+	if (deg >= 348.75 or deg <= 11.25) dir = "east";
+	else if (deg >= 348.75 - 22.5 * 1) dir = "east-southeast";
+	else if (deg >= 348.75 - 22.5 * 2) dir = "southeast";
+	else if (deg >= 348.75 - 22.5 * 3) dir = "south-southeast";
+	else if (deg >= 348.75 - 22.5 * 4) dir = "south";
+	else if (deg >= 348.75 - 22.5 * 5) dir = "south-southwest";
+	else if (deg >= 348.75 - 22.5 * 6) dir = "southwest";
+	else if (deg >= 348.75 - 22.5 * 7) dir = "west-southwest";
+	else if (deg >= 348.75 - 22.5 * 8) dir = "west";
+	else if (deg >= 348.75 - 22.5 * 9) dir = "west-northwest";
+	else if (deg >= 348.75 - 22.5 * 10) dir = "northwest";
+	else if (deg >= 348.75 - 22.5 * 11) dir = "north-northwest";
+	else if (deg >= 348.75 - 22.5 * 12) dir = "north";
+	else if (deg >= 348.75 - 22.5 * 13) dir = "north-northeast";
+	else if (deg >= 348.75 - 22.5 * 14) dir = "northeast";
+	else dir = "east-northeast";
+	
+	dist = sqrt((e.x - midFeature.centerPosition.x) ** 2 + (e.y - midFeature.centerPosition.y) ** 2);
+	msg += ("then another " + (dist / 300) + " days\n" + dir + " until you\nreach the mountains.");
+	
+	p.log(msg);
+	return msg;
+}
 
 void WorldBuilder_main(ScriptComponent @p)
 {
@@ -185,6 +314,7 @@ void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 	array<int> btiles = {1, 10, 13};
 	
 	WorldBuilder_removeBlockedRegions(p, editMap, btiles, 1);
+	WorldBuilder_identifyNaturalFeatures(p, editMap);
 	
 	// Convert back...
 	
@@ -204,14 +334,26 @@ void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 	
 	int tax = 0;
 	int tay = 0;
+	int nfi = 0;
+	NaturalFeatureData @nf = null;
 	while(true)
 	{
-		int r = p.randomRange(0, tiles.length() - w);
-		if (tiles[r] == 13 and tiles[r + w] == 12)
+		int r = p.randomRange(0, gNaturalFeature.length());
+		if (gNaturalFeature[r].name == "High Mountains")
 		{
-			tiles[r] = 5;
-			tax = (r % w) * 32;
-			tay = (r / w) * 32;
+			@nf = gNaturalFeature[r];
+			nfi = r;
+			break;
+		}
+	}
+	while(true)
+	{
+		int r = p.randomRange(0, nf.tpos.length());
+		if (tiles[nf.tpos[r]] == 13 and tiles[nf.tpos[r] + w] == 12)
+		{
+			tiles[nf.tpos[r]] = 12;
+			tax = (nf.tpos[r] % w) * 32;
+			tay = (nf.tpos[r] / w) * 32;
 			break;
 		}
 	}
@@ -224,14 +366,16 @@ void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 	// Start
 
 	int wts = 0;
-	while(tiles[wts] == 1 or tiles[wts] == 10 or tiles[wts] == 13)
+	int wx = 0;
+	int wy = 0;
+	while(tiles[wy * w + wx] != 5)
 	{
-		++wts;
+		wx = p.randomRange(0, w);
+		wy = p.randomRange(0, h);
 	}
+	wx *= 32;
+	wy *= 32;
 	
-	
-	float wx = wts % w * 32.0f;
-	float wy = wts / w * 32.0f;
 	gMaster.setReg("destx", wx);
 	gMaster.setReg("desty", wy);
 	
@@ -241,10 +385,23 @@ void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 	p.addSceneLayer("World", "main", false);
 	p.addSceneLayer("World", "HUD", true);
 	p.addSceneEntity("World", "MapLogic", 1, true, "HUD", 0.0, 0.0, false);
-	p.addSceneDataEntity("World", "MapIcon", 1, true, "main", tax, tay, false, areaData);
+	p.addSceneDataEntity("World", "InvisibleMapIcon", 1, true, "main", tax, tay, false, areaData);
 	p.addSceneEntity("World", "MapWizard", 1, true, "main", wx, wy, false);
+	array<string> clueData;
+	clueData.insertLast("nodeTotal");
+	clueData.insertLast("1");
+	clueData.insertLast("0");
+	Coord b;
+	b.x = wx;
+	b.y = wy;
+	Coord e;
+	e.x = tax;
+	e.y = tay;
+	clueData.insertLast(WorldBuilder_directionsTest(p, b, e));
+	p.addSceneDataEntity("World", "ClueChest", 1, true, "main", wx + 32, wy + 32, false, clueData);
 	p.addSceneTilemap("World", "U5", "terrain", w, h, tiles);
 }
+
 
 array<array<Coord>> WorldBuilder_getRegions(ScriptComponent @p, array<array<int>> @map, array<int> @btiles)
 {
@@ -430,6 +587,51 @@ void WorldBuilder_removeBlockedRegions(ScriptComponent @p, array<array<int>> @ma
 	
 }
 
+void WorldBuilder_identifyNaturalFeatures(ScriptComponent @p, array<array<int>> @map)
+{
+	array<int> featureTile = {10, 13};
+	array<int> bTiles = {1,3, 5, 6, 8, 9, 10, 11, 12, 13};
+	
+	for (int k = 0; k < featureTile.length(); ++k)
+	{
+		int ft = featureTile[k];
+		int ftIndex = bTiles.find(ft);
+		bTiles.removeAt(ftIndex);
+		
+		auto region = WorldBuilder_getRegions(p, map, bTiles);
+		for (int i = 0; i < region.length(); ++i)
+		{
+			auto @r = region[i];
+			NaturalFeatureData nfd;
+			int xMin = 20000;
+			int yMin = 20000;
+			int xMax = -1;
+			int yMax = -1;
+			for (int j = 0; j < r.length(); ++j)
+			{
+				auto @c = r[j];
+				if (c.x < xMin) xMin = c.x;
+				if (c.x > xMax) xMax = c.x;
+				if (c.y < yMin) yMin = c.y;
+				if (c.y > yMax) yMax = c.y;
+				nfd.tpos.insertLast(c.y * map.length() + c.x);
+			}
+			if (nfd.tpos.length() < 40) continue;
+			Coord center;
+			center.x = (xMin + xMax) / 2 * 32;
+			center.y = (yMin + yMax) / 2 * 32;
+			
+			if (ft == 10) nfd.name = "A Dark Forest";
+			else nfd.name = "High Mountains";
+			nfd.centerPosition = center;
+			gNaturalFeature.insertLast(nfd);
+			p.log("Natural feature: " + nfd.name + ", with center " + nfd.centerPosition.x + ", " + nfd.centerPosition.y);
+		}
+		
+		bTiles.insertLast(ft);
+	}
+	
+}
 
 void WorldBuilder_readAreaData(ScriptComponent @p, array<string> @fname)
 {
