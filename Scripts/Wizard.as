@@ -38,6 +38,14 @@ void Wizard_mainState(ScriptComponent @p)
 			p.suspend();
 			continue;
 		}
+		if (p.getReg("dmgCounter") > 0)
+		{
+			Wizard_damageState(p);
+			auto pos = p.position();
+			p.setViewCenter(pos.x, pos.y);
+			p.suspend();
+			continue;
+		}
 		
 		auto pos = p.position();
 		p.setViewCenter(pos.x, pos.y);
@@ -124,12 +132,45 @@ void Wizard_shoot(ScriptComponent @p, const InputEvent &input)
 		auto handle = p.forceSpawn("Fireball", "main");
 		if (handle !is null)
 		{
-			auto pos = p.position();
-			handle.setPosition(pos.x + 8.0, pos.y + 8.0);
+			auto pos = p.physicsCenter();
+			handle.setPosition(pos.x - 8.0, pos.y - 8.0);
 			handle.setMomentum(shootX, shootY);
 		}
 	}
 
 	p.setReg("spellCoolCounter", 0);
 
+}
+
+void Wizard_damageState(ScriptComponent @p)
+{
+	auto counter = p.modReg("dmgCounter", -1);
+	if (counter == 0)
+	{
+		p.setRenderColor(255, 255, 255, 255);
+	}
+}
+
+void Wizard_onCollision(ScriptComponent @p, Entity @e, PhysicsComponent @pc)
+{
+	if (e.hasTag("Mob") and p.getReg("dmgCounter") == 0)
+	{
+		p.setReg("dmgCounter", 10);
+		auto pCenter = p.physicsCenter();
+		auto m = e.scriptComponent();
+		auto mCenter = m.physicsCenter();
+		
+		float mag = sqrt((pCenter.x - mCenter.x) ** 2 + (pCenter.y - mCenter.y) ** 2);
+		float x = (pCenter.x - mCenter.x) / mag * 8.0;
+		float y = (pCenter.y - mCenter.y) / mag * 8.0;
+		p.setMomentum(x, y);
+		p.playAnimation("idle");
+		p.setRenderColor(255, 0, 0, 255);
+		if (--gWizardData.hp == 0)
+		{
+			p.changeScene("Death");
+		}
+		
+		return;
+	}
 }

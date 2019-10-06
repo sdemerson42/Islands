@@ -376,8 +376,8 @@ void WorldBuilder_buildContinent(ScriptComponent @p, int w, int h)
 	wx *= 32;
 	wy *= 32;
 	
-	gMaster.setReg("destx", wx);
-	gMaster.setReg("desty", wy);
+	gMaster.setReg("destx", tax);
+	gMaster.setReg("desty", tay + 32);
 	
 		
 	p.createSceneData("World", w * 32, h * 32, 100, 100);

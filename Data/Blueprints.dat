@@ -191,3 +191,9 @@ Tag {"InvisibleMapIcon"}
 Physics { 8.0, 8.0, 16.0, 16.0, 0, 0, 0, 0.0, false, false, false }
 Script { "MapIcon", "Scripts/MapIcon.as" }
 }
+
+DeathScreen
+{
+Tag {"DeathScreen"}
+Render{0.0, 0.0, 800.0, 600.0, "Assets/Textures/Skull.png"}
+}

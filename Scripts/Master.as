@@ -1,4 +1,10 @@
+class WizardData
+{
+	int hp;
+}
+
 ScriptComponent @gMaster;
+WizardData gWizardData;
 
 void Master_main(ScriptComponent @p)
 {
@@ -10,6 +16,7 @@ void Master_main(ScriptComponent @p)
 	// Test regs
 	
 	p.setReg("food", 100);
+	gWizardData.hp = 5;
 	
 	p.log("Master OK");
 	
